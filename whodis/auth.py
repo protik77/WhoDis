@@ -2,12 +2,12 @@
 
 import hashlib
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
+import bcrypt
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
 from whodis.config import (
@@ -19,27 +19,31 @@ from whodis.config import (
 )
 from whodis.models import APIKey, SessionLocal, User, get_db
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer(auto_error=False)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash."""
-    return pwd_context.verify(plain_password, hashed_password)
+    return bcrypt.checkpw(
+        plain_password.encode("utf-8"),
+        hashed_password.encode("utf-8"),
+    )
 
 
 def get_password_hash(password: str) -> str:
     """Hash a password."""
-    return pwd_context.hash(password)
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
+    return hashed.decode("utf-8")
 
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """Create a JWT access token."""
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc).replace(tzinfo=None) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -69,7 +73,7 @@ def verify_api_key(key: str, key_hash: str) -> bool:
     return hash_api_key(key) == key_hash
 
 
-def get_current_user_from_session(request: Request) -> User | None:
+def get_current_user_from_session(request: Request, db: Session) -> User | None:
     """Get current user from session cookie."""
     token = request.cookies.get("session")
     if not token:
@@ -83,12 +87,8 @@ def get_current_user_from_session(request: Request) -> User | None:
     if not username:
         return None
 
-    db = SessionLocal()
-    try:
-        user = db.query(User).filter(User.username == username).first()
-        return user
-    finally:
-        db.close()
+    user = db.query(User).filter(User.username == username).first()
+    return user
 
 
 def get_current_user_from_api_key(
@@ -112,7 +112,7 @@ def get_current_user_from_api_key(
         return None
 
     # Update last used
-    api_key.last_used_at = datetime.utcnow()
+    api_key.last_used_at = datetime.now(timezone.utc).replace(tzinfo=None)
     db.commit()
 
     return api_key.created_by_user
@@ -120,12 +120,13 @@ def get_current_user_from_api_key(
 
 def get_current_user(
     request: Request,
+    db: Session = Depends(get_db),
     api_user: User | None = Depends(get_current_user_from_api_key),
 ) -> User | None:
     """Get current user from either session or API key."""
     if api_user:
         return api_user
-    return get_current_user_from_session(request)
+    return get_current_user_from_session(request, db)
 
 
 def require_auth(user: User | None = Depends(get_current_user)) -> User:
@@ -145,6 +146,19 @@ def require_admin(user: User = Depends(require_auth)) -> User:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin access required",
+        )
+    return user
+
+
+def require_api_key(
+    user: User | None = Depends(get_current_user_from_api_key),
+) -> User:
+    """Dependency to require API key authentication."""
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or missing API key",
+            headers={"WWW-Authenticate": "Bearer"},
         )
     return user
 

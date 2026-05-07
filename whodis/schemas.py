@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 # ==================== Auth Schemas ====================
 
@@ -20,8 +20,7 @@ class UserResponse(UserBase):
     is_admin: bool
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class Token(BaseModel):
@@ -48,8 +47,7 @@ class APIKeyResponse(BaseModel):
     last_used_at: datetime | None
     is_active: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class APIKeyCreateResponse(BaseModel):
@@ -81,8 +79,7 @@ class PersonResponse(PersonBase):
     created_at: datetime
     reference_image_count: int = 0
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ReferenceImageResponse(BaseModel):
@@ -92,8 +89,7 @@ class ReferenceImageResponse(BaseModel):
     engine_type: str | None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ==================== Detection Schemas ====================
@@ -120,8 +116,7 @@ class DetectionLogResponse(BaseModel):
     engine_used: str | None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ==================== Annotation Queue Schemas ====================
@@ -135,8 +130,7 @@ class AnnotationQueueItemResponse(BaseModel):
     status: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AnnotationSubmit(BaseModel):

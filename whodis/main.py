@@ -1,5 +1,6 @@
 """WhoDis - Person Detection API with Web Annotation Interface."""
 
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -13,7 +14,7 @@ from whodis.routers import api, auth, web
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Application lifespan handler."""
     # Startup
     init_db()
@@ -49,12 +50,12 @@ app.include_router(web.router)
 
 
 @app.get("/health")
-async def health_check():
+async def health_check() -> dict:
     """Health check endpoint."""
     return {"status": "healthy", "service": "whodis"}
 
 
-def main():
+def main() -> None:
     """Entry point for running the server."""
     import uvicorn
 

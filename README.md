@@ -17,10 +17,25 @@ A FastAPI-based person detection system with web annotation interface.
 uv sync
 
 # Run the application
-uv run python -m whodis.main
+make run
 ```
 
-Default login: `admin` / `admin123`
+Default login: `admin` / `admin123` (Configurable via environment variables)
+
+## Development
+
+Useful commands for development:
+
+```bash
+# Run tests
+make test
+
+# Run linting and type checks
+make lint
+
+# Build Docker image
+make build-docker
+```
 
 ## API Usage
 
