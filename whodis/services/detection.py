@@ -92,11 +92,11 @@ async def detect_person(
         async with aiofiles.open(file_path, "wb") as f:
             await f.write(image_data)
 
-        detection_log.image_path = str(file_path)  # type: ignore[assignment]
+        detection_log.image_path = filename  # type: ignore[assignment]
 
         queue_item = AnnotationQueue(
             detection_log_id=detection_log.id,
-            image_path=str(file_path),
+            image_path=filename,
             status="pending",
         )
         db.add(queue_item)
@@ -150,7 +150,7 @@ async def add_reference_image(
     # Create reference image record
     ref_image = ReferenceImage(
         person_id=person_id,
-        image_path=str(file_path),
+        image_path=filename,
         embedding=embedding,
         engine_type=engine.name,
     )

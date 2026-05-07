@@ -8,8 +8,7 @@ CONTAINER_NAME="${CONTAINER_NAME:-whodis}"
 HOST_PORT="${HOST_PORT:-8000}"
 CONTAINER_PORT="${CONTAINER_PORT:-8000}"
 IMAGE_TAG="${IMAGE_TAG:-whodis:latest}"
-UPLOADS_DIR="${UPLOADS_DIR:-$(pwd)/uploads}"
-DB_DIR="${DB_DIR:-$(pwd)}"
+DATA_DIR="$(pwd)/data"
 
 # Colors for output
 RED='\033[0;31m'
@@ -22,6 +21,7 @@ echo "Container name: $CONTAINER_NAME"
 echo "Host port: $HOST_PORT"
 echo "Container port: $CONTAINER_PORT"
 echo "Image: $IMAGE_TAG"
+echo "Data directory: $DATA_DIR"
 echo ""
 
 # Stop and remove existing container if running
@@ -45,10 +45,21 @@ echo -e "${GREEN}Build complete${NC}"
 
 echo ""
 
-# Create uploads directory if it doesn't exist
-if [ ! -d "$UPLOADS_DIR" ]; then
-    echo -e "${YELLOW}Creating uploads directory: $UPLOADS_DIR${NC}"
-    mkdir -p "$UPLOADS_DIR"
+# Migration and Setup
+echo -e "${YELLOW}Setting up persistent data directory...${NC}"
+mkdir -p "$DATA_DIR/uploads"
+
+# Migrate existing whodis.db if it exists in current dir
+if [ -f "whodis.db" ] && [ ! -f "$DATA_DIR/whodis.db" ]; then
+    echo -e "${YELLOW}Migrating whodis.db to $DATA_DIR/...${NC}"
+    mv "whodis.db" "$DATA_DIR/"
+fi
+
+# Migrate existing uploads if they exist in current dir
+if [ -d "uploads" ] && [ "$(ls -A uploads 2>/dev/null)" ]; then
+    echo -e "${YELLOW}Migrating uploads to $DATA_DIR/uploads/...${NC}"
+    mv uploads/* "$DATA_DIR/uploads/" 2>/dev/null || true
+    rmdir uploads 2>/dev/null || true
 fi
 
 # Run the container
@@ -56,8 +67,7 @@ echo -e "${YELLOW}Starting container: $CONTAINER_NAME${NC}"
 docker run -d \
     --name "$CONTAINER_NAME" \
     -p "${HOST_PORT}:${CONTAINER_PORT}" \
-    -v "${UPLOADS_DIR}:/app/uploads" \
-    -v "${DB_DIR}/whodis.db:/app/whodis.db" \
+    -v "${DATA_DIR}:/app/data" \
     --restart unless-stopped \
     "$IMAGE_TAG"
 
