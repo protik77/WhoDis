@@ -2,6 +2,8 @@
 
 A FastAPI-based person detection system with web annotation interface.
 
+[Read the Architecture Documentation](ARCHITECTURE.md)
+
 ## Features
 
 - **Modular Detection Engines**: Pluggable architecture supporting multiple backends (ImageHash default)
