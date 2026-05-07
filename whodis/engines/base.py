@@ -3,6 +3,8 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
+from sqlalchemy.orm import Session
+
 
 @dataclass
 class DetectionResult:
@@ -30,7 +32,7 @@ class DetectionEngine(ABC):
     name: str = "base"
 
     @abstractmethod
-    async def detect(self, image_data: bytes, db_session) -> DetectionResult:
+    async def detect(self, image_data: bytes, db_session: Session) -> DetectionResult:
         """
         Detect a person in an image.
 
@@ -71,7 +73,7 @@ class DetectionEngine(ABC):
         pass
 
     async def find_matches(
-        self, image_data: bytes, db_session, threshold: float = 0.8
+        self, image_data: bytes, db_session: Session, threshold: float = 0.8
     ) -> list[ReferenceMatch]:
         """
         Find all potential matches above threshold.

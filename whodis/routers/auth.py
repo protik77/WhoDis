@@ -80,7 +80,7 @@ async def get_me(current_user: User = Depends(require_admin)) -> User:
 async def list_api_keys(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
-):
+) -> list[APIKey]:
     """List all API keys."""
     keys = db.query(APIKey).filter(APIKey.created_by == current_user.id).all()
     return keys
@@ -92,7 +92,7 @@ async def create_api_key(
     name: str = Form(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
-):
+) -> HTMLResponse:
     """Create a new API key."""
     # Generate key
     key = generate_api_key()
@@ -143,7 +143,7 @@ async def revoke_api_key(
     key_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(require_admin),
-):
+) -> RedirectResponse:
     """Revoke an API key."""
     api_key = (
         db.query(APIKey)
@@ -160,14 +160,14 @@ async def revoke_api_key(
             detail="API key not found",
         )
 
-    api_key.is_active = False
+    api_key.is_active = False  # type: ignore[assignment]
     db.commit()
 
     return RedirectResponse(url="/api-keys", status_code=status.HTTP_302_FOUND)
 
 
 @router.post("/init")
-async def init_admin(db: Session = Depends(get_db)):
+async def init_admin(db: Session = Depends(get_db)) -> dict:
     """Initialize default admin (development only)."""
     # Check if any users exist
     user_count = db.query(User).count()

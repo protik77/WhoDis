@@ -5,6 +5,7 @@ import pickle
 
 import imagehash
 from PIL import Image
+from sqlalchemy.orm import Session
 
 from whodis.config import IMAGEHASH_THRESHOLD, MAX_IMAGE_DIMENSION
 from whodis.engines.base import DetectionEngine, DetectionResult
@@ -19,8 +20,12 @@ class ImageHashEngine(DetectionEngine):
 
     name = "imagehash"
 
-    def __init__(self, threshold: int = None):
+    def __init__(self, threshold: int = 10):
         self.threshold = threshold or IMAGEHASH_THRESHOLD
+
+    def _load_image(self, image_data: bytes) -> Image.Image:
+        """Load image from bytes."""
+        return Image.open(io.BytesIO(image_data))
 
     def _resize_image(self, img: Image.Image) -> Image.Image:
         """Resize image if too large while maintaining aspect ratio."""
@@ -86,9 +91,9 @@ class ImageHashEngine(DetectionEngine):
         similarity = (0.2 * avg_sim) + (0.5 * perc_sim) + (0.3 * diff_sim)
 
         # Ensure in valid range
-        return max(0.0, min(1.0, similarity))
+        return float(max(0.0, min(1.0, similarity)))
 
-    async def detect(self, image_data: bytes, db_session) -> DetectionResult:
+    async def detect(self, image_data: bytes, db_session: Session) -> DetectionResult:
         """
         Detect a person using image hashing.
 
@@ -128,4 +133,4 @@ class ImageHashEngine(DetectionEngine):
         diff_dist = hashes1["difference"] - hashes2["difference"]
 
         # Weighted combination
-        return int(0.2 * avg_dist + 0.5 * perc_dist + 0.3 * diff_dist)
+        return float(0.2 * avg_dist + 0.5 * perc_dist + 0.3 * diff_dist)

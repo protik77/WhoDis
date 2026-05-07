@@ -2,7 +2,8 @@
 
 import hashlib
 import secrets
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
+from typing import cast
 
 import bcrypt
 from fastapi import Depends, HTTPException, Request, status
@@ -41,19 +42,21 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     """Create a JWT access token."""
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.now(timezone.utc).replace(tzinfo=None) + expires_delta
+        expire = datetime.now(UTC).replace(tzinfo=None) + expires_delta
     else:
-        expire = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(UTC).replace(tzinfo=None) + timedelta(
+            minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+        )
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    return str(encoded_jwt)
 
 
 def decode_token(token: str) -> dict | None:
     """Decode and validate a JWT token."""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        return payload
+        return cast(dict | None, payload)
     except JWTError:
         return None
 
@@ -112,10 +115,10 @@ def get_current_user_from_api_key(
         return None
 
     # Update last used
-    api_key.last_used_at = datetime.now(timezone.utc).replace(tzinfo=None)
+    api_key.last_used_at = datetime.now(UTC).replace(tzinfo=None)  # type: ignore[assignment]
     db.commit()
 
-    return api_key.created_by_user
+    return cast(User | None, api_key.created_by_user)
 
 
 def get_current_user(
@@ -163,7 +166,7 @@ def require_api_key(
     return user
 
 
-def create_default_admin():
+def create_default_admin() -> None:
     """Create default admin user if no users exist."""
     db = SessionLocal()
     try:
