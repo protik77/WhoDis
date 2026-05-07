@@ -1,7 +1,6 @@
 """Integration tests for API endpoints."""
 
 import io
-from PIL import Image
 
 
 class TestHealthEndpoint:
@@ -82,7 +81,9 @@ class TestAPIKeyEndpoints:
         # Get the key ID
         key = db_session.query(APIKey).first()
 
-        response = auth_client.post(f"/auth/api-keys/{key.id}/revoke", follow_redirects=False)
+        response = auth_client.post(
+            f"/auth/api-keys/{key.id}/revoke", follow_redirects=False
+        )
 
         assert response.status_code == 302
 

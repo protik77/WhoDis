@@ -10,6 +10,8 @@ from whodis.auth import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     create_access_token,
     create_default_admin,
+    generate_api_key,
+    hash_api_key,
     require_admin,
     verify_password,
 )
@@ -18,7 +20,6 @@ from whodis.schemas import (
     APIKeyResponse,
     UserResponse,
 )
-from whodis.auth import generate_api_key, hash_api_key
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -39,13 +40,13 @@ async def login(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password",
         )
-    
+
     # Create session token
     access_token = create_access_token(
         data={"sub": user.username},
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
     )
-    
+
     # Set cookie
     response = RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
     response.set_cookie(
@@ -74,6 +75,7 @@ async def get_me(current_user: User = Depends(require_admin)):
 
 # ==================== API Key Management ====================
 
+
 @router.get("/api-keys", response_model=list[APIKeyResponse])
 async def list_api_keys(
     db: Session = Depends(get_db),
@@ -95,7 +97,7 @@ async def create_api_key(
     # Generate key
     key = generate_api_key()
     key_hash = hash_api_key(key)
-    
+
     # Store in database
     api_key = APIKey(
         key_hash=key_hash,
@@ -105,7 +107,7 @@ async def create_api_key(
     db.add(api_key)
     db.commit()
     db.refresh(api_key)
-    
+
     # Show key in a simple HTML page since it's only shown once
     html = f"""
     <!DOCTYPE html>
@@ -124,7 +126,7 @@ async def create_api_key(
         <div class="warning">
             <strong>Important:</strong> This is the only time you will see this key. Copy it now!
         </div>
-        <p><strong>Name:</strong> {name or 'Unnamed'}</p>
+        <p><strong>Name:</strong> {name or "Unnamed"}</p>
         <p><strong>Key:</strong></p>
         <div class="key">{key}</div>
         <p style="margin-top: 20px;">
@@ -143,20 +145,24 @@ async def revoke_api_key(
     current_user: User = Depends(require_admin),
 ):
     """Revoke an API key."""
-    api_key = db.query(APIKey).filter(
-        APIKey.id == key_id,
-        APIKey.created_by == current_user.id,
-    ).first()
-    
+    api_key = (
+        db.query(APIKey)
+        .filter(
+            APIKey.id == key_id,
+            APIKey.created_by == current_user.id,
+        )
+        .first()
+    )
+
     if not api_key:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="API key not found",
         )
-    
+
     api_key.is_active = False
     db.commit()
-    
+
     return RedirectResponse(url="/api-keys", status_code=status.HTTP_302_FOUND)
 
 
@@ -170,6 +176,6 @@ async def init_admin(db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Admin already initialized",
         )
-    
+
     create_default_admin()
     return {"message": "Default admin created"}

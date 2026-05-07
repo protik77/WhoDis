@@ -1,12 +1,11 @@
 """Pydantic schemas for request/response validation."""
 
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, Field
 
-
 # ==================== Auth Schemas ====================
+
 
 class UserBase(BaseModel):
     username: str
@@ -37,15 +36,16 @@ class LoginRequest(BaseModel):
 
 # ==================== API Key Schemas ====================
 
+
 class APIKeyCreate(BaseModel):
-    name: Optional[str] = None
+    name: str | None = None
 
 
 class APIKeyResponse(BaseModel):
     id: int
-    name: Optional[str]
+    name: str | None
     created_at: datetime
-    last_used_at: Optional[datetime]
+    last_used_at: datetime | None
     is_active: bool
 
     class Config:
@@ -54,16 +54,17 @@ class APIKeyResponse(BaseModel):
 
 class APIKeyCreateResponse(BaseModel):
     id: int
-    name: Optional[str]
+    name: str | None
     key: str  # Only shown once on creation
     created_at: datetime
 
 
 # ==================== Person Schemas ====================
 
+
 class PersonBase(BaseModel):
     name: str
-    notes: Optional[str] = None
+    notes: str | None = None
 
 
 class PersonCreate(PersonBase):
@@ -71,8 +72,8 @@ class PersonCreate(PersonBase):
 
 
 class PersonUpdate(BaseModel):
-    name: Optional[str] = None
-    notes: Optional[str] = None
+    name: str | None = None
+    notes: str | None = None
 
 
 class PersonResponse(PersonBase):
@@ -88,7 +89,7 @@ class ReferenceImageResponse(BaseModel):
     id: int
     person_id: int
     image_path: str
-    engine_type: Optional[str]
+    engine_type: str | None
     created_at: datetime
 
     class Config:
@@ -97,13 +98,14 @@ class ReferenceImageResponse(BaseModel):
 
 # ==================== Detection Schemas ====================
 
+
 class DetectionRequest(BaseModel):
-    engine: Optional[str] = None
+    engine: str | None = None
 
 
 class DetectionResponse(BaseModel):
-    person: Optional[str] = None
-    person_id: Optional[int] = None
+    person: str | None = None
+    person_id: int | None = None
     confidence: float = Field(ge=0.0, le=1.0)
     queued_for_annotation: bool = False
     engine_used: str
@@ -112,10 +114,10 @@ class DetectionResponse(BaseModel):
 class DetectionLogResponse(BaseModel):
     id: int
     image_path: str
-    detected_person_id: Optional[int]
-    detected_person_name: Optional[str]
-    confidence: Optional[float]
-    engine_used: Optional[str]
+    detected_person_id: int | None
+    detected_person_name: str | None
+    confidence: float | None
+    engine_used: str | None
     created_at: datetime
 
     class Config:
@@ -124,11 +126,12 @@ class DetectionLogResponse(BaseModel):
 
 # ==================== Annotation Queue Schemas ====================
 
+
 class AnnotationQueueItemResponse(BaseModel):
     id: int
     image_path: str
-    suggested_person_id: Optional[int]
-    suggested_person_name: Optional[str]
+    suggested_person_id: int | None
+    suggested_person_name: str | None
     status: str
     created_at: datetime
 
@@ -137,12 +140,13 @@ class AnnotationQueueItemResponse(BaseModel):
 
 
 class AnnotationSubmit(BaseModel):
-    person_id: Optional[int] = None  # Null = new person
-    new_person_name: Optional[str] = None  # If creating new person
+    person_id: int | None = None  # Null = new person
+    new_person_name: str | None = None  # If creating new person
     ignore: bool = False  # Mark as ignore instead of annotating
 
 
 # ==================== Stats Schemas ====================
+
 
 class DashboardStats(BaseModel):
     total_people: int
