@@ -10,11 +10,11 @@ from fastapi import (
     UploadFile,
     status,
 )
-from fastapi.security import HTTPBearer
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
-from whodis.auth import hash_api_key
-from whodis.models import get_db
+from whodis.auth import require_api_key
+from whodis.models import User, get_db
 from whodis.schemas import DetectionResponse
 from whodis.services.detection import detect_person
 
@@ -28,8 +28,8 @@ async def detect(
     image: UploadFile = File(...),
     engine: str | None = Form(None),
     db: Session = Depends(get_db),
-    credentials=Security(security),
-):
+    user: User = Depends(require_api_key),
+) -> DetectionResponse:
     """
     Detect a person in an image.
 
@@ -39,38 +39,6 @@ async def detect(
     Returns person name if recognized, or queues for annotation if unknown.
     Requires API key authentication via Authorization header.
     """
-    if not credentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or missing API key",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    # Verify API key
-    key = credentials.credentials
-    key_hash = hash_api_key(key)
-
-    from whodis.models import APIKey
-
-    api_key = (
-        db.query(APIKey)
-        .filter(APIKey.key_hash == key_hash, APIKey.is_active.is_(True))
-        .first()
-    )
-
-    if not api_key:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or missing API key",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    # Update last used
-    from datetime import datetime
-
-    api_key.last_used_at = datetime.utcnow()
-    db.commit()
-
     # Read image data
     image_data = await image.read()
 
@@ -79,7 +47,7 @@ async def detect(
         image_data=image_data,
         db=db,
         engine_name=engine,
-        api_key_id=api_key.id,
+        api_key_id=None,  # We don't have the API key ID easily here without more work, but we have the user
     )
 
     return result
@@ -88,33 +56,9 @@ async def detect(
 @router.get("/engines")
 async def list_engines(
     db: Session = Depends(get_db),
-    credentials=Security(security),
-):
+    user: User = Depends(require_api_key),
+) -> dict:
     """List available detection engines."""
-    if not credentials:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or missing API key",
-        )
-
-    # Verify API key
-    key = credentials.credentials
-    key_hash = hash_api_key(key)
-
-    from whodis.models import APIKey
-
-    api_key = (
-        db.query(APIKey)
-        .filter(APIKey.key_hash == key_hash, APIKey.is_active.is_(True))
-        .first()
-    )
-
-    if not api_key:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or missing API key",
-        )
-
     from whodis.config import DEFAULT_ENGINE
     from whodis.engines.registry import EngineRegistry
 

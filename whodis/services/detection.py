@@ -13,7 +13,7 @@ from whodis.models import AnnotationQueue, DetectionLog, Person, ReferenceImage
 from whodis.schemas import DetectionResponse
 
 
-async def save_upload_file(file: UploadFile) -> Path:
+async def save_upload_file(file: UploadFile) -> tuple[Path, bytes]:
     """Save an uploaded file to disk."""
     # Generate unique filename
     ext = Path(file.filename).suffix.lower() if file.filename else ".jpg"
@@ -92,7 +92,7 @@ async def detect_person(
         async with aiofiles.open(file_path, "wb") as f:
             await f.write(image_data)
 
-        detection_log.image_path = str(file_path)
+        detection_log.image_path = str(file_path)  # type: ignore[assignment]
 
         queue_item = AnnotationQueue(
             detection_log_id=detection_log.id,

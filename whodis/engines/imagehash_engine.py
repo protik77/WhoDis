@@ -115,7 +115,7 @@ class ImageHashEngine(DetectionEngine):
             matched=True,
         )
 
-    def compute_hash_distance(self, emb1: bytes, emb2: bytes) -> int:
+    def compute_hash_distance(self, emb1: bytes, emb2: bytes) -> float:
         """Compute combined hash distance (for debugging)."""
         try:
             hashes1 = pickle.loads(emb1)

@@ -110,8 +110,8 @@ async def submit_annotation(
     # Update queue item
     queue_item.status = "annotated"
     queue_item.suggested_person_id = person.id
-    queue_item.annotated_at = datetime.utcnow()
-    queue_item.annotated_by = annotated_by
+    queue_item.annotated_at = datetime.utcnow()  # type: ignore[assignment]
+    queue_item.annotated_by = annotated_by  # type: ignore[assignment]
 
     # Update detection log
     detection_log = (
@@ -121,7 +121,7 @@ async def submit_annotation(
     )
     if detection_log:
         detection_log.detected_person_id = person.id
-        detection_log.confidence = 1.0  # Human verified
+        detection_log.confidence = 1.0  # type: ignore[assignment] # Human verified
 
     db.commit()
 

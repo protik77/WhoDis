@@ -31,11 +31,11 @@ async def login(
     username: str = Form(...),
     password: str = Form(...),
     db: Session = Depends(get_db),
-):
+) -> RedirectResponse:
     """Login for web interface (session-based)."""
     # Find user
     user = db.query(User).filter(User.username == username).first()
-    if not user or not verify_password(password, user.hashed_password):
+    if not user or not verify_password(password, user.hashed_password):  # type: ignore[arg-type]
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password",
@@ -60,7 +60,7 @@ async def login(
 
 
 @router.get("/logout")
-async def logout():
+async def logout() -> RedirectResponse:
     """Logout and clear session."""
     response = RedirectResponse(url="/auth/login", status_code=status.HTTP_302_FOUND)
     response.delete_cookie("session")
@@ -68,7 +68,7 @@ async def logout():
 
 
 @router.get("/me", response_model=UserResponse)
-async def get_me(current_user: User = Depends(require_admin)):
+async def get_me(current_user: User = Depends(require_admin)) -> User:
     """Get current user info."""
     return current_user
 

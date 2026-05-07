@@ -11,7 +11,7 @@ class EngineRegistry:
     _engine_classes: dict[str, type[DetectionEngine]] = {}
 
     @classmethod
-    def register(cls, name: str, engine_class: type[DetectionEngine]):
+    def register(cls, name: str, engine_class: type[DetectionEngine]) -> None:
         """Register an engine class."""
         cls._engine_classes[name] = engine_class
 
@@ -39,17 +39,17 @@ class EngineRegistry:
         return engine
 
     @classmethod
-    def list_engines(cls) -> list:
+    def list_engines(cls) -> list[str]:
         """List all registered engine names."""
         return list(cls._engine_classes.keys())
 
     @classmethod
-    def clear_cache(cls):
+    def clear_cache(cls) -> None:
         """Clear cached engine instances."""
         cls._engines.clear()
 
 
-def register_default_engines():
+def register_default_engines() -> None:
     """Register the default engines."""
     from whodis.engines.imagehash_engine import ImageHashEngine
 
