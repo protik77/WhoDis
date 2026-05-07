@@ -132,9 +132,21 @@ def get_current_user(
     return get_current_user_from_session(request, db)
 
 
-def require_auth(user: User | None = Depends(get_current_user)) -> User:
+def require_auth(
+    request: Request, user: User | None = Depends(get_current_user)
+) -> User:
     """Dependency to require authentication."""
     if not user:
+        # Check if it's a browser request
+        accept = request.headers.get("accept", "")
+        if "text/html" in accept:
+            from fastapi.responses import RedirectResponse
+
+            raise HTTPException(
+                status_code=status.HTTP_307_TEMPORARY_REDIRECT,
+                headers={"Location": "/login"},
+            )
+
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required",
