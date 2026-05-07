@@ -140,8 +140,6 @@ def require_auth(
         # Check if it's a browser request
         accept = request.headers.get("accept", "")
         if "text/html" in accept:
-            from fastapi.responses import RedirectResponse
-
             raise HTTPException(
                 status_code=status.HTTP_307_TEMPORARY_REDIRECT,
                 headers={"Location": "/login"},

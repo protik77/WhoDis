@@ -100,7 +100,9 @@ class TestWebEndpoints:
 
     def test_dashboard_requires_auth_redirect(self, client):
         """Test dashboard redirects to login for HTML requests."""
-        response = client.get("/", headers={"Accept": "text/html"}, follow_redirects=False)
+        response = client.get(
+            "/", headers={"Accept": "text/html"}, follow_redirects=False
+        )
 
         assert response.status_code == 307
         assert response.headers["location"] == "/login"
