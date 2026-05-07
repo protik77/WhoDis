@@ -94,10 +94,12 @@ async def detect_person(
 
         detection_log.image_path = filename  # type: ignore[assignment]
 
+        import json
         queue_item = AnnotationQueue(
             detection_log_id=detection_log.id,
             image_path=filename,
             status="pending",
+            box_2d=json.dumps(result.box) if result.box else None,
         )
         db.add(queue_item)
         db.commit()
