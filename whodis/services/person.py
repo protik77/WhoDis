@@ -37,9 +37,9 @@ def update_person(db: Session, person_id: int, data: PersonUpdate) -> Person | N
         return None
 
     if data.name is not None:
-        person.name = data.name
+        person.name = data.name  # type: ignore[assignment]
     if data.notes is not None:
-        person.notes = data.notes
+        person.notes = data.notes  # type: ignore[assignment]
 
     db.commit()
     db.refresh(person)

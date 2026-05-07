@@ -1,5 +1,7 @@
 """Web routes for the annotation interface."""
 
+from datetime import UTC
+
 from fastapi import (
     APIRouter,
     Depends,
@@ -44,7 +46,7 @@ async def dashboard(
     user: User = Depends(require_admin),
 ) -> HTMLResponse:
     """Main dashboard page."""
-    from datetime import datetime, timedelta, timezone
+    from datetime import datetime, timedelta
 
     from whodis.models import APIKey, DetectionLog
 
@@ -55,7 +57,10 @@ async def dashboard(
         .filter(AnnotationQueue.status == "pending")
         .count(),
         "total_detections_24h": db.query(DetectionLog)
-        .filter(DetectionLog.created_at >= datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=24))
+        .filter(
+            DetectionLog.created_at
+            >= datetime.now(UTC).replace(tzinfo=None) - timedelta(hours=24)
+        )
         .count(),
         "api_keys_count": db.query(APIKey).filter(APIKey.created_by == user.id).count(),
     }
@@ -68,7 +73,7 @@ async def dashboard(
 
 
 @router.get("/login", response_class=HTMLResponse)
-async def login_page(request: Request):
+async def login_page(request: Request) -> HTMLResponse:
     """Login page."""
     return templates.TemplateResponse(request, "login.html", {})
 
@@ -84,7 +89,7 @@ async def people_list(
 
     # Add reference image count for each
     for person in people:
-        person.reference_image_count = (
+        person.reference_image_count = (  # type: ignore[attr-defined]
             db.query(ReferenceImage)
             .filter(ReferenceImage.person_id == person.id)
             .count()
@@ -138,7 +143,7 @@ async def create_person_form(
     # If image uploaded, add as reference
     if image and image.filename:
         image_data = await image.read()
-        await add_reference_image(person.id, image_data, db)
+        await add_reference_image(person.id, image_data, db)  # type: ignore[arg-type]
 
     return RedirectResponse(url="/people", status_code=status.HTTP_302_FOUND)
 
@@ -167,7 +172,7 @@ async def add_person_image(
         raise HTTPException(status_code=404, detail="Person not found")
 
     image_data = await image.read()
-    await add_reference_image(person.id, image_data, db)
+    await add_reference_image(person.id, image_data, db)  # type: ignore[arg-type]
 
     return RedirectResponse(
         url=f"/people/{person_id}",

@@ -1,6 +1,7 @@
 """SQLAlchemy models for WhoDis."""
 
-from datetime import datetime, timezone
+from collections.abc import Generator
+from datetime import UTC, datetime
 
 from sqlalchemy import (
     Boolean,
@@ -14,7 +15,7 @@ from sqlalchemy import (
     Text,
     create_engine,
 )
-from sqlalchemy.orm import DeclarativeBase, relationship, sessionmaker
+from sqlalchemy.orm import DeclarativeBase, Session, relationship, sessionmaker
 
 from whodis.config import DATABASE_URL
 
@@ -32,7 +33,9 @@ class User(Base):
     username = Column(String, unique=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     is_admin = Column(Boolean, default=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(UTC).replace(tzinfo=None)
+    )
 
     # Relationships
     api_keys = relationship("APIKey", back_populates="created_by_user")
@@ -48,7 +51,9 @@ class APIKey(Base):
     key_hash = Column(String, unique=True, nullable=False)  # SHA256 hash of key
     name = Column(String, nullable=True)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(UTC).replace(tzinfo=None)
+    )
     last_used_at = Column(DateTime, nullable=True)
     is_active = Column(Boolean, default=True)
 
@@ -65,7 +70,9 @@ class Person(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     notes = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(UTC).replace(tzinfo=None)
+    )
 
     # Relationships
     reference_images = relationship(
@@ -89,7 +96,9 @@ class ReferenceImage(Base):
     image_path = Column(String, nullable=False)
     embedding = Column(LargeBinary, nullable=True)  # Precomputed embedding
     engine_type = Column(String, nullable=True)  # Which engine generated this embedding
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(UTC).replace(tzinfo=None)
+    )
 
     # Relationships
     person = relationship("Person", back_populates="reference_images")
@@ -106,7 +115,9 @@ class DetectionLog(Base):
     confidence = Column(Float, nullable=True)
     engine_used = Column(String, nullable=True)
     api_key_id = Column(Integer, ForeignKey("api_keys.id"), nullable=True)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(UTC).replace(tzinfo=None)
+    )
 
     # Relationships
     detected_person = relationship("Person", back_populates="detection_logs")
@@ -124,7 +135,9 @@ class AnnotationQueue(Base):
     image_path = Column(String, nullable=False)
     suggested_person_id = Column(Integer, ForeignKey("people.id"), nullable=True)
     status = Column(String, default="pending")  # pending, annotated, ignored
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc).replace(tzinfo=None))
+    created_at = Column(
+        DateTime, default=lambda: datetime.now(UTC).replace(tzinfo=None)
+    )
     annotated_at = Column(DateTime, nullable=True)
     annotated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
 
@@ -148,7 +161,7 @@ engine = create_engine(
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-def get_db():
+def get_db() -> Generator[Session, None, None]:
     """Get database session."""
     db = SessionLocal()
     try:
@@ -157,6 +170,6 @@ def get_db():
         db.close()
 
 
-def init_db():
+def init_db() -> None:
     """Initialize database tables."""
     Base.metadata.create_all(bind=engine)

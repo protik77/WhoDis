@@ -5,12 +5,9 @@ from fastapi import (
     Depends,
     File,
     Form,
-    HTTPException,
-    Security,
     UploadFile,
-    status,
 )
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 
 from whodis.auth import require_api_key

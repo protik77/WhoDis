@@ -71,9 +71,9 @@ async def submit_annotation(
 
     if data.ignore:
         # Mark as ignored
-        queue_item.status = "ignored"
-        queue_item.annotated_at = datetime.utcnow()
-        queue_item.annotated_by = annotated_by
+        queue_item.status = "ignored"  # type: ignore[assignment]
+        queue_item.annotated_at = datetime.utcnow()  # type: ignore[assignment]
+        queue_item.annotated_by = annotated_by  # type: ignore[assignment]
         db.commit()
         return {"action": "ignored", "annotation_id": annotation_id}
 
@@ -101,15 +101,16 @@ async def submit_annotation(
     # Add as reference image
     from whodis.services.detection import add_reference_image as add_ref
 
+    assert person is not None
     ref_image = await add_ref(
-        person_id=person.id,
+        person_id=person.id,  # type: ignore[arg-type]
         image_data=image_data,
         db=db,
     )
 
     # Update queue item
-    queue_item.status = "annotated"
-    queue_item.suggested_person_id = person.id
+    queue_item.status = "annotated"  # type: ignore[assignment]
+    queue_item.suggested_person_id = person.id  # type: ignore[assignment]
     queue_item.annotated_at = datetime.utcnow()  # type: ignore[assignment]
     queue_item.annotated_by = annotated_by  # type: ignore[assignment]
 
@@ -120,7 +121,7 @@ async def submit_annotation(
         .first()
     )
     if detection_log:
-        detection_log.detected_person_id = person.id
+        detection_log.detected_person_id = person.id  # type: ignore[assignment]
         detection_log.confidence = 1.0  # type: ignore[assignment] # Human verified
 
     db.commit()
