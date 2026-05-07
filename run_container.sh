@@ -8,7 +8,8 @@ CONTAINER_NAME="${CONTAINER_NAME:-whodis}"
 HOST_PORT="${HOST_PORT:-8000}"
 CONTAINER_PORT="${CONTAINER_PORT:-8000}"
 IMAGE_TAG="${IMAGE_TAG:-whodis:latest}"
-DATA_DIR="$(pwd)/data"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+DATA_DIR="${SCRIPT_DIR}/data"
 
 # Colors for output
 RED='\033[0;31m'
@@ -68,6 +69,7 @@ docker run -d \
     --name "$CONTAINER_NAME" \
     -p "${HOST_PORT}:${CONTAINER_PORT}" \
     -v "${DATA_DIR}:/app/data" \
+    -e DATA_DIR="/app/data" \
     --restart unless-stopped \
     "$IMAGE_TAG"
 
