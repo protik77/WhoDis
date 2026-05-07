@@ -2,6 +2,7 @@
 
 from collections.abc import Generator
 from datetime import UTC, datetime
+from pathlib import Path
 
 from sqlalchemy import (
     Boolean,
@@ -103,6 +104,26 @@ class ReferenceImage(Base):
     # Relationships
     person = relationship("Person", back_populates="reference_images")
 
+    @property
+    def image_url(self) -> str:
+        """Get the web URL for the image."""
+        if not self.image_path:
+            return ""
+        if "/" in self.image_path or "\\" in self.image_path:
+            return f"/uploads/{Path(self.image_path).name}"
+        return f"/uploads/{self.image_path}"
+
+    @property
+    def full_image_path(self) -> Path:
+        """Get the absolute path for file operations."""
+        from whodis.config import UPLOAD_DIR
+
+        if not self.image_path:
+            return Path("")
+        if Path(self.image_path).is_absolute():
+            return Path(self.image_path)
+        return UPLOAD_DIR / self.image_path
+
 
 class DetectionLog(Base):
     """Log of all detection attempts."""
@@ -138,6 +159,28 @@ class AnnotationQueue(Base):
     created_at = Column(
         DateTime, default=lambda: datetime.now(UTC).replace(tzinfo=None)
     )
+
+    @property
+    def image_url(self) -> str:
+        """Get the web URL for the image."""
+        if not self.image_path:
+            return ""
+        # Handle both absolute paths and filenames
+        if "/" in self.image_path or "\\" in self.image_path:
+            return f"/uploads/{Path(self.image_path).name}"
+        return f"/uploads/{self.image_path}"
+
+    @property
+    def full_image_path(self) -> Path:
+        """Get the absolute path for file operations."""
+        from whodis.config import UPLOAD_DIR
+
+        if not self.image_path:
+            return Path("")
+        if Path(self.image_path).is_absolute():
+            return Path(self.image_path)
+        return UPLOAD_DIR / self.image_path
+
     annotated_at = Column(DateTime, nullable=True)
     annotated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
 

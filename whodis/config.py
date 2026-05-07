@@ -10,8 +10,12 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).parent
 
+# Data Directory
+DATA_DIR = Path(os.getenv("DATA_DIR", BASE_DIR.parent / "data"))
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+
 # Database
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./whodis.db")
+DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{DATA_DIR}/whodis.db")
 
 # Security
 SECRET_KEY = os.getenv("SECRET_KEY", secrets.token_urlsafe(32))
@@ -26,7 +30,7 @@ ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin123")
 DEFAULT_ENGINE = os.getenv("DEFAULT_ENGINE", "imagehash")
 
 # File storage
-UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", BASE_DIR / "../uploads"))
+UPLOAD_DIR = Path(os.getenv("UPLOAD_DIR", DATA_DIR / "uploads"))
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 MAX_IMAGE_SIZE = int(os.getenv("MAX_IMAGE_SIZE", 10 * 1024 * 1024))  # 10MB
 

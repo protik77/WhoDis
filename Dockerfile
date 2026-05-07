@@ -12,19 +12,24 @@ RUN apt-get update && apt-get install -y \
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
 # Copy dependency files
-COPY pyproject.toml uv.lock ./
+COPY pyproject.toml uv.lock README.md ./
 
-# Install dependencies
-RUN uv sync --group dev
+# Install dependencies (but not the project itself yet)
+RUN uv sync --frozen --no-install-project --group dev
 
 # Copy application code
 COPY whodis/ ./whodis/
 COPY tests/ ./tests/
 COPY alembic/ ./alembic/
 COPY run.py ./
+COPY Makefile ./
 
-# Create uploads directory
-RUN mkdir -p uploads
+# Install the project
+RUN uv sync --frozen --group dev
+
+# Create data directory and volume
+RUN mkdir -p data
+VOLUME /app/data
 
 # Expose port
 EXPOSE 8000

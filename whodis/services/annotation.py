@@ -95,7 +95,7 @@ async def submit_annotation(
     # Read image data
     import aiofiles
 
-    async with aiofiles.open(queue_item.image_path, "rb") as f:
+    async with aiofiles.open(queue_item.full_image_path, "rb") as f:
         image_data = await f.read()
 
     # Add as reference image
