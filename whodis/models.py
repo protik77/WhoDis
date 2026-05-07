@@ -168,7 +168,8 @@ class AnnotationQueue(Base):
 
         if self.box_2d:
             try:
-                return json.loads(self.box_2d)
+                from typing import cast
+                return cast(list[float], json.loads(str(self.box_2d)))
             except Exception:
                 return None
         return None
