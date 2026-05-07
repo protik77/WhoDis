@@ -15,6 +15,7 @@ from sqlalchemy import (
     String,
     Text,
     create_engine,
+    text,
 )
 from sqlalchemy.orm import DeclarativeBase, Session, relationship, sessionmaker
 
@@ -169,6 +170,7 @@ class AnnotationQueue(Base):
         if self.box_2d:
             try:
                 from typing import cast
+
                 return cast(list[float], json.loads(str(self.box_2d)))
             except Exception:
                 return None
@@ -228,5 +230,22 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def init_db() -> None:
-    """Initialize database tables."""
+    """Initialize database tables and handle simple migrations."""
+    from whodis.config import DATABASE_URL
+
     Base.metadata.create_all(bind=engine)
+
+    # Simple migration for box_2d column
+    if DATABASE_URL.startswith("sqlite"):
+        try:
+            with engine.connect() as conn:
+                # SQLite PRAGMA to check columns
+                result = conn.execute(text("PRAGMA table_info(annotation_queue)"))
+                columns = [row[1] for row in result]
+                if "box_2d" not in columns:
+                    conn.execute(
+                        text("ALTER TABLE annotation_queue ADD COLUMN box_2d TEXT")
+                    )
+                    conn.commit()
+        except Exception as e:
+            print(f"Migration error: {e}")

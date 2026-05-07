@@ -98,15 +98,22 @@ class TestWebEndpoints:
         assert response.status_code == 200
         assert "Login" in response.text
 
-    def test_dashboard_requires_auth(self, client):
-        """Test dashboard requires authentication."""
-        response = client.get("/")
+    def test_dashboard_requires_auth_redirect(self, client):
+        """Test dashboard redirects to login for HTML requests."""
+        response = client.get("/", headers={"Accept": "text/html"}, follow_redirects=False)
+
+        assert response.status_code == 307
+        assert response.headers["location"] == "/login"
+
+    def test_dashboard_requires_auth_api(self, client):
+        """Test dashboard still returns 401 for non-HTML requests."""
+        response = client.get("/", headers={"Accept": "application/json"})
 
         assert response.status_code == 401
 
     def test_dashboard_authenticated(self, auth_client):
         """Test dashboard loads when authenticated."""
-        response = auth_client.get("/")
+        response = auth_client.get("/", headers={"Accept": "text/html"})
 
         assert response.status_code == 200
         assert "Dashboard" in response.text

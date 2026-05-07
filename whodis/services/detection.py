@@ -100,7 +100,7 @@ async def detect_person(
             detection_log_id=detection_log.id,
             image_path=filename,
             status="pending",
-            box_2d=json.dumps(result.box) if result.box else None,
+            box_2d=json.dumps(result.box if result.box else [5, 5, 90, 90]),
         )
         db.add(queue_item)
         db.commit()
