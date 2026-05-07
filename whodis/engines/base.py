@@ -14,6 +14,7 @@ class DetectionResult:
     person_name: str | None
     confidence: float  # 0.0 to 1.0
     matched: bool
+    box: list[float] | None = None  # [x, y, w, h] as percentages
 
 
 @dataclass

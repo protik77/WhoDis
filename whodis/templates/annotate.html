@@ -26,7 +26,24 @@
     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 1rem;">
         {% for item in pending %}
         <div style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
-            <img src="{{ item.image_url }}" alt="Unknown person" style="width: 100%; height: 200px; object-fit: cover;">
+            <div style="position: relative; width: 100%; height: 200px;">
+                <img src="{{ item.image_url }}" alt="Unknown person" style="width: 100%; height: 100%; object-fit: cover;">
+                {% if item.box %}
+                <div style="
+                    position: absolute;
+                    border: 3px solid #e74c3c;
+                    box-shadow: 0 0 8px rgba(0,0,0,0.5);
+                    left: {{ item.box[0] }}%;
+                    top: {{ item.box[1] }}%;
+                    width: {{ item.box[2] }}%;
+                    height: {{ item.box[3] }}%;
+                    pointer-events: none;
+                    border-radius: 2px;
+                ">
+                    <span style="position: absolute; top: -20px; left: -2px; background: #e74c3c; color: white; padding: 0 4px; font-size: 0.7rem; font-weight: bold; border-radius: 2px;">ANNOTATE THIS</span>
+                </div>
+                {% endif %}
+            </div>
             <div style="padding: 1rem;">
                 <p style="font-size: 0.8rem; color: #666; margin: 0 0 0.5rem 0;">
                     {{ item.created_at.strftime("%Y-%m-%d %H:%M") }}

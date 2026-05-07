@@ -156,9 +156,22 @@ class AnnotationQueue(Base):
     image_path = Column(String, nullable=False)
     suggested_person_id = Column(Integer, ForeignKey("people.id"), nullable=True)
     status = Column(String, default="pending")  # pending, annotated, ignored
+    box_2d = Column(String, nullable=True)  # JSON-encoded [x, y, w, h] as percentages
     created_at = Column(
         DateTime, default=lambda: datetime.now(UTC).replace(tzinfo=None)
     )
+
+    @property
+    def box(self) -> list[float] | None:
+        """Get the bounding box as a list [x, y, w, h]."""
+        import json
+
+        if self.box_2d:
+            try:
+                return json.loads(self.box_2d)
+            except Exception:
+                return None
+        return None
 
     @property
     def image_url(self) -> str:
