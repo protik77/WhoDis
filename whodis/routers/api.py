@@ -1,8 +1,15 @@
 """API routes for client integration."""
 
-from typing import Optional
-
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Security, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    Security,
+    UploadFile,
+    status,
+)
 from fastapi.security import HTTPBearer
 from sqlalchemy.orm import Session
 
@@ -19,16 +26,16 @@ router = APIRouter(prefix="/api", tags=["api"])
 @router.post("/detect", response_model=DetectionResponse)
 async def detect(
     image: UploadFile = File(...),
-    engine: Optional[str] = Form(None),
+    engine: str | None = Form(None),
     db: Session = Depends(get_db),
     credentials=Security(security),
 ):
     """
     Detect a person in an image.
-    
+
     - **image**: Image file to analyze
     - **engine**: Optional engine to use (defaults to configured default)
-    
+
     Returns person name if recognized, or queues for annotation if unknown.
     Requires API key authentication via Authorization header.
     """
@@ -38,32 +45,35 @@ async def detect(
             detail="Invalid or missing API key",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     # Verify API key
     key = credentials.credentials
     key_hash = hash_api_key(key)
-    
+
     from whodis.models import APIKey
-    api_key = db.query(APIKey).filter(
-        APIKey.key_hash == key_hash,
-        APIKey.is_active.is_(True)
-    ).first()
-    
+
+    api_key = (
+        db.query(APIKey)
+        .filter(APIKey.key_hash == key_hash, APIKey.is_active.is_(True))
+        .first()
+    )
+
     if not api_key:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or missing API key",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     # Update last used
     from datetime import datetime
+
     api_key.last_used_at = datetime.utcnow()
     db.commit()
-    
+
     # Read image data
     image_data = await image.read()
-    
+
     # Perform detection
     result = await detect_person(
         image_data=image_data,
@@ -71,7 +81,7 @@ async def detect(
         engine_name=engine,
         api_key_id=api_key.id,
     )
-    
+
     return result
 
 
@@ -86,26 +96,28 @@ async def list_engines(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or missing API key",
         )
-    
+
     # Verify API key
     key = credentials.credentials
     key_hash = hash_api_key(key)
-    
+
     from whodis.models import APIKey
-    api_key = db.query(APIKey).filter(
-        APIKey.key_hash == key_hash,
-        APIKey.is_active.is_(True)
-    ).first()
-    
+
+    api_key = (
+        db.query(APIKey)
+        .filter(APIKey.key_hash == key_hash, APIKey.is_active.is_(True))
+        .first()
+    )
+
     if not api_key:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or missing API key",
         )
-    
-    from whodis.engines.registry import EngineRegistry
+
     from whodis.config import DEFAULT_ENGINE
-    
+    from whodis.engines.registry import EngineRegistry
+
     return {
         "engines": EngineRegistry.list_engines(),
         "default": DEFAULT_ENGINE,

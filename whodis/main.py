@@ -57,6 +57,7 @@ async def health_check():
 def main():
     """Entry point for running the server."""
     import uvicorn
+
     uvicorn.run(
         "whodis.main:app",
         host="0.0.0.0",

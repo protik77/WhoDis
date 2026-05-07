@@ -68,9 +68,15 @@ class Person(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
-    reference_images = relationship("ReferenceImage", back_populates="person", cascade="all, delete-orphan")
+    reference_images = relationship(
+        "ReferenceImage", back_populates="person", cascade="all, delete-orphan"
+    )
     detection_logs = relationship("DetectionLog", back_populates="detected_person")
-    annotation_suggestions = relationship("AnnotationQueue", foreign_keys="AnnotationQueue.suggested_person_id", back_populates="suggested_person")
+    annotation_suggestions = relationship(
+        "AnnotationQueue",
+        foreign_keys="AnnotationQueue.suggested_person_id",
+        back_populates="suggested_person",
+    )
 
 
 class ReferenceImage(Base):
@@ -124,14 +130,20 @@ class AnnotationQueue(Base):
 
     # Relationships
     detection_log = relationship("DetectionLog", back_populates="annotation_queue")
-    suggested_person = relationship("Person", foreign_keys=[suggested_person_id], back_populates="annotation_suggestions")
+    suggested_person = relationship(
+        "Person",
+        foreign_keys=[suggested_person_id],
+        back_populates="annotation_suggestions",
+    )
     annotated_by_user = relationship("User", back_populates="annotations")
 
 
 # Database setup
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+    connect_args={"check_same_thread": False}
+    if DATABASE_URL.startswith("sqlite")
+    else {},
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

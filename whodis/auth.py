@@ -3,10 +3,9 @@
 import hashlib
 import secrets
 from datetime import datetime, timedelta
-from typing import Optional
 
 from fastapi import Depends, HTTPException, Request, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
@@ -34,7 +33,7 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """Create a JWT access token."""
     to_encode = data.copy()
     if expires_delta:
@@ -46,7 +45,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     return encoded_jwt
 
 
-def decode_token(token: str) -> Optional[dict]:
+def decode_token(token: str) -> dict | None:
     """Decode and validate a JWT token."""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -70,20 +69,20 @@ def verify_api_key(key: str, key_hash: str) -> bool:
     return hash_api_key(key) == key_hash
 
 
-def get_current_user_from_session(request: Request) -> Optional[User]:
+def get_current_user_from_session(request: Request) -> User | None:
     """Get current user from session cookie."""
     token = request.cookies.get("session")
     if not token:
         return None
-    
+
     payload = decode_token(token)
     if not payload:
         return None
-    
+
     username = payload.get("sub")
     if not username:
         return None
-    
+
     db = SessionLocal()
     try:
         user = db.query(User).filter(User.username == username).first()
@@ -93,42 +92,43 @@ def get_current_user_from_session(request: Request) -> Optional[User]:
 
 
 def get_current_user_from_api_key(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
     db: Session = Depends(get_db),
-) -> Optional[User]:
+) -> User | None:
     """Get current user from API key header."""
     if not credentials:
         return None
-    
+
     key = credentials.credentials
     key_hash = hash_api_key(key)
-    
-    api_key = db.query(APIKey).filter(
-        APIKey.key_hash == key_hash,
-        APIKey.is_active.is_(True)
-    ).first()
-    
+
+    api_key = (
+        db.query(APIKey)
+        .filter(APIKey.key_hash == key_hash, APIKey.is_active.is_(True))
+        .first()
+    )
+
     if not api_key:
         return None
-    
+
     # Update last used
     api_key.last_used_at = datetime.utcnow()
     db.commit()
-    
+
     return api_key.created_by_user
 
 
 def get_current_user(
     request: Request,
-    api_user: Optional[User] = Depends(get_current_user_from_api_key),
-) -> Optional[User]:
+    api_user: User | None = Depends(get_current_user_from_api_key),
+) -> User | None:
     """Get current user from either session or API key."""
     if api_user:
         return api_user
     return get_current_user_from_session(request)
 
 
-def require_auth(user: Optional[User] = Depends(get_current_user)) -> User:
+def require_auth(user: User | None = Depends(get_current_user)) -> User:
     """Dependency to require authentication."""
     if not user:
         raise HTTPException(

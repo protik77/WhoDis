@@ -1,13 +1,13 @@
 """Unit tests for Pydantic schemas."""
 
-from datetime import datetime
+import pytest
+from pydantic import ValidationError
 
 from whodis.schemas import (
-    PersonCreate,
-    PersonResponse,
-    DetectionResponse,
     APIKeyCreate,
+    DetectionResponse,
     LoginRequest,
+    PersonCreate,
 )
 
 
@@ -61,17 +61,12 @@ class TestDetectionResponse:
 
     def test_confidence_range(self):
         """Test confidence must be between 0 and 1."""
-        from pydantic import ValidationError
-
-        try:
+        with pytest.raises(ValidationError):
             DetectionResponse(
                 person="Test",
                 confidence=1.5,  # Invalid: > 1
                 engine_used="imagehash",
             )
-            assert False, "Should have raised ValidationError"
-        except ValidationError:
-            pass
 
 
 class TestAPIKeyCreate:
