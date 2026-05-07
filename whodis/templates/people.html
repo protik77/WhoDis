@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}People - WhoDis{% endblock %}
+
+{% block content %}
+<h1>People</h1>
+
+<div class="card">
+    <h3>Add New Person</h3>
+    <form method="POST" action="/people" enctype="multipart/form-data">
+        <div class="form-group">
+            <label>Name</label>
+            <input type="text" name="name" required>
+        </div>
+        <div class="form-group">
+            <label>Notes</label>
+            <textarea name="notes" rows="2"></textarea>
+        </div>
+        <div class="form-group">
+            <label>Reference Image (optional)</label>
+            <input type="file" name="image" accept="image/*">
+        </div>
+        <button type="submit" class="btn btn-success">Add Person</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Known People</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Images</th>
+                <th>Created</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for person in people %}
+            <tr>
+                <td>{{ person.name }}</td>
+                <td>{{ person.reference_image_count }}</td>
+                <td>{{ person.created_at.strftime("%Y-%m-%d") }}</td>
+                <td>
+                    <a href="/people/{{ person.id }}" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">View</a>
+                    <form method="POST" action="/people/{{ person.id }}/delete" style="display: inline;" onsubmit="return confirm('Delete {{ person.name }}?');">
+                        <button type="submit" class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" style="text-align: center; color: #666;">No people yet. Add one above.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

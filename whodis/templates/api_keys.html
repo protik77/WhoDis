@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}API Keys - WhoDis{% endblock %}
+
+{% block content %}
+<h1>API Keys</h1>
+
+<div class="card">
+    <h3>Create New API Key</h3>
+    <form method="POST" action="/auth/api-keys">
+        <div class="form-group">
+            <label>Name (optional)</label>
+            <input type="text" name="name" placeholder="e.g., Home Assistant">
+        </div>
+        <button type="submit" class="btn btn-success">Generate Key</button>
+    </form>
+    <p style="margin-top: 1rem; color: #666; font-size: 0.9rem;">
+        API keys are shown only once after creation. Store them securely.
+    </p>
+</div>
+
+<div class="card">
+    <h3>Your API Keys</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Created</th>
+                <th>Last Used</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for key in keys %}
+            <tr>
+                <td>{{ key.name or "Unnamed" }}</td>
+                <td>{{ key.created_at.strftime("%Y-%m-%d") }}</td>
+                <td>{{ key.last_used_at.strftime("%Y-%m-%d %H:%M") if key.last_used_at else "Never" }}</td>
+                <td>
+                    {% if key.is_active %}
+                    <span class="badge badge-success">Active</span>
+                    {% else %}
+                    <span class="badge badge-danger">Revoked</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if key.is_active %}
+                    <form method="POST" action="/auth/api-keys/{{ key.id }}/revoke" style="display: inline;">
+                        <button type="submit" class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;">Revoke</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center; color: #666;">No API keys yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="card">
+    <h3>How to Use</h3>
+    <p>Send POST requests to <code>/api/detect</code> with your API key:</p>
+    <pre style="background: #f4f4f4; padding: 1rem; border-radius: 4px; overflow-x: auto;">
+curl -X POST \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -F "image=@/path/to/image.jpg" \\
+  http://localhost:8000/api/detect</pre>
+</div>
+{% endblock %}

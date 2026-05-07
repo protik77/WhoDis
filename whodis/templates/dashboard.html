@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - WhoDis{% endblock %}
+
+{% block content %}
+<h1>Dashboard</h1>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.total_people }}</div>
+        <div class="stat-label">Known People</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.total_reference_images }}</div>
+        <div class="stat-label">Reference Images</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.pending_annotations }}</div>
+        <div class="stat-label">Pending Annotations</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.total_detections_24h }}</div>
+        <div class="stat-label">Detections (24h)</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.api_keys_count }}</div>
+        <div class="stat-label">API Keys</div>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Quick Actions</h3>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;">
+        <a href="/people" class="btn btn-primary">Manage People</a>
+        <a href="/annotate" class="btn btn-success">Annotate Images</a>
+        <a href="/api-keys" class="btn btn-secondary">Manage API Keys</a>
+    </div>
+</div>
+
+<div class="card">
+    <h3>API Usage</h3>
+    <p>Send POST requests to <code>/api/detect</code> with:</p>
+    <ul>
+        <li>Header: <code>Authorization: Bearer YOUR_API_KEY</code></li>
+        <li>Form data: <code>image</code> (file upload)</li>
+    </ul>
+    <p>Response: <code>{"person": "Name", "confidence": 0.95, "queued_for_annotation": false}</code></p>
+</div>
+{% endblock %}
