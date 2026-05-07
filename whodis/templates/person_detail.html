@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}{{ person.name }} - WhoDis{% endblock %}
+
+{% block content %}
+<h1>{{ person.name }}</h1>
+
+<div class="card">
+    <p><strong>Created:</strong> {{ person.created_at.strftime("%Y-%m-%d %H:%M") }}</p>
+    {% if person.notes %}
+    <p><strong>Notes:</strong> {{ person.notes }}</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3>Add Reference Image</h3>
+    <form method="POST" action="/people/{{ person.id }}/add-image" enctype="multipart/form-data">
+        <div class="form-group">
+            <input type="file" name="image" accept="image/*" required>
+        </div>
+        <button type="submit" class="btn btn-success">Add Image</button>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Reference Images ({{ reference_images|length }})</h3>
+    {% if reference_images %}
+    <div class="image-grid">
+        {% for img in reference_images %}
+        <div class="image-card">
+            <img src="/{{ img.image_path }}" alt="Reference image" loading="lazy">
+            <p style="font-size: 0.8rem; color: #666; margin: 0.5rem 0 0 0;">
+                {{ img.created_at.strftime("%Y-%m-%d") }}
+            </p>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p style="color: #666;">No reference images yet.</p>
+    {% endif %}
+</div>
+
+<div style="margin-top: 2rem;">
+    <a href="/people" class="btn btn-secondary">Back to People</a>
+</div>
+{% endblock %}
