@@ -95,6 +95,7 @@ async def detect_person(
         detection_log.image_path = filename  # type: ignore[assignment]
 
         import json
+
         queue_item = AnnotationQueue(
             detection_log_id=detection_log.id,
             image_path=filename,
