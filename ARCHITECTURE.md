@@ -22,7 +22,8 @@ WhoDis is designed to be a lightweight, extensible system for person detection a
 whodis/
 ├── engines/           # Pluggable detection engine implementations
 │   ├── base.py        # Abstract base class for engines
-│   └── imagehash.py   # Perceptual hashing implementation
+│   ├── imagehash_engine.py # Perceptual hashing implementation
+│   └── deepface_engine.py  # DeepFace face recognition implementation
 ├── services/          # Business logic and database operations
 │   ├── annotation.py  # Management of unknown detections
 │   ├── detection.py   # Core detection flow coordination

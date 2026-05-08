@@ -22,7 +22,18 @@
 
 {% if pending %}
 <div class="card">
-    <h3>Pending Annotations ({{ pending|length }})</h3>
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <h3>Pending Annotations ({{ pending|length }})</h3>
+        <div class="engine-selector">
+            <label for="annotation-engine" style="font-size: 0.9rem; margin-right: 0.5rem;">Annotation Engine:</label>
+            <select id="annotation-engine" name="engine" form="annotation-form-template" style="font-size: 0.9rem;">
+                <option value="">Default ({{ default_engine }})</option>
+                {% for engine in available_engines %}
+                <option value="{{ engine }}">{{ engine }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 1rem;">
         {% for item in pending %}
         <div style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
@@ -48,7 +59,8 @@
                 <p style="font-size: 0.8rem; color: #666; margin: 0 0 0.5rem 0;">
                     {{ item.created_at.strftime("%Y-%m-%d %H:%M") }}
                 </p>
-                <form method="POST" action="/annotate/{{ item.id }}">
+                <form method="POST" action="/annotate/{{ item.id }}" class="annotation-form">
+                    <input type="hidden" name="engine" class="engine-input" value="">
                     <div class="form-group">
                         <select name="person_id" style="font-size: 0.9rem;">
                             <option value="">-- Select Person --</option>
@@ -75,4 +87,34 @@
     <p style="text-align: center; color: #666;">No pending annotations. The queue is empty!</p>
 </div>
 {% endif %}
+
+<script>
+// Persist engine selection across page loads
+(function() {
+    const engineSelect = document.getElementById('annotation-engine');
+    const engineInputs = document.querySelectorAll('.engine-input');
+
+    if (engineSelect) {
+        // Load saved preference
+        const savedEngine = sessionStorage.getItem('annotationEngine');
+        if (savedEngine !== null) {
+            engineSelect.value = savedEngine;
+        }
+
+        // Update all hidden inputs when selection changes
+        function updateEngineInputs() {
+            const value = engineSelect.value;
+            engineInputs.forEach(input => {
+                input.value = value;
+            });
+            sessionStorage.setItem('annotationEngine', value);
+        }
+
+        engineSelect.addEventListener('change', updateEngineInputs);
+
+        // Initial update
+        updateEngineInputs();
+    }
+})();
+</script>
 {% endblock %}

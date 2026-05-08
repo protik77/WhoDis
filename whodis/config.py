@@ -40,3 +40,14 @@ SUPPORTED_IMAGE_FORMATS = {"JPEG", "JPG", "PNG", "WEBP", "GIF", "BMP"}
 
 # Detection thresholds
 IMAGEHASH_THRESHOLD = int(os.getenv("IMAGEHASH_THRESHOLD", 10))
+
+# DeepFace configuration
+DEEPFACE_BACKEND = os.getenv(
+    "DEEPFACE_BACKEND", "opencv"
+)  # opencv, dlib, mtcnn, retinaface, mediapipe
+DEEPFACE_MODEL = os.getenv(
+    "DEEPFACE_MODEL", "Facenet"
+)  # Facenet, Facenet512, VGG-Face, OpenFace, DeepFace, ArcFace
+DEEPFACE_THRESHOLD = float(
+    os.getenv("DEEPFACE_THRESHOLD", "0.4")
+)  # Cosine similarity threshold (0.0-1.0)

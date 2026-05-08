@@ -106,6 +106,7 @@ async def submit_annotation(
         person_id=person.id,  # type: ignore[arg-type]
         image_data=image_data,
         db=db,
+        engine_name=data.engine,
     )
 
     # Update queue item

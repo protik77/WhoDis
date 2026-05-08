@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import uvicorn
 
 
-def main():
+def main() -> None:
     uvicorn.run(
         "whodis.main:app",
         host="0.0.0.0",

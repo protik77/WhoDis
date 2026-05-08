@@ -12,3 +12,11 @@ __all__ = [
     "register_default_engines",
     "ImageHashEngine",
 ]
+
+# Conditionally export DeepFaceEngine if available
+try:
+    from whodis.engines.deepface_engine import DeepFaceEngine  # noqa: F401
+
+    __all__.append("DeepFaceEngine")
+except ImportError:
+    pass

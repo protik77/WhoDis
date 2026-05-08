@@ -5,10 +5,12 @@ import json
 from whodis.models import AnnotationQueue, SessionLocal
 
 
-def backfill():
+def backfill() -> None:
     db = SessionLocal()
     try:
-        pending = db.query(AnnotationQueue).filter(AnnotationQueue.box_2d is None).all()
+        pending = (
+            db.query(AnnotationQueue).filter(AnnotationQueue.box_2d.is_(None)).all()
+        )
         print(f"Found {len(pending)} annotations without boxes.")
 
         # Default box: [25, 25, 50, 50] - a 50% box in the center
@@ -16,7 +18,7 @@ def backfill():
         box_json = json.dumps(default_box)
 
         for item in pending:
-            item.box_2d = box_json
+            item.box_2d = box_json  # type: ignore[assignment]
 
         db.commit()
         print(f"Successfully backfilled {len(pending)} annotations.")

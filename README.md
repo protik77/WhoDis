@@ -6,7 +6,7 @@ A FastAPI-based person detection system with web annotation interface.
 
 ## Features
 
-- **Modular Detection Engines**: Pluggable architecture supporting multiple backends (ImageHash default)
+- **Modular Detection Engines**: Pluggable architecture supporting multiple backends (ImageHash default, DeepFace face recognition)
 - **Web Annotation Interface**: Review unknown detections and assign identities
 - **API for Clients**: REST API for Home Assistant and other integrations
 - **API Key Authentication**: Secure key-based access for automation
@@ -80,6 +80,51 @@ If person is unknown:
   "engine_used": "imagehash"
 }
 ```
+
+## Detection Engines
+
+WhoDis supports multiple detection engines:
+
+### ImageHash (Default)
+Uses perceptual hashing for image similarity. Fast and simple, but not face-aware.
+
+### DeepFace (Face Recognition)
+True face recognition using DeepFace library with OpenCV backend. Optimized for CPU usage.
+
+**Configuration** (via environment variables in `.env`):
+```bash
+# Set default engine
+default_engine=deepface
+
+# DeepFace settings (CPU optimized)
+DEEPFACE_BACKEND=opencv        # opencv (fast), dlib (accurate), mtcnn, retinaface
+DEEPFACE_MODEL=Facenet         # Facenet (128-dim, fast), Facenet512, VGG-Face
+DEEPFACE_THRESHOLD=0.4         # Similarity threshold (0.0-1.0)
+```
+
+**Using Engines**:
+```bash
+# API: Explicitly select engine
+curl -X POST \
+  -H "Authorization: Bearer KEY" \
+  -F "image=@photo.jpg" \
+  -F "engine=deepface" \
+  http://localhost:8000/api/detect
+
+# Web UI: Select engine in annotation page dropdown
+# Your choice is persisted via session storage
+```
+
+**Engine Comparison**:
+
+| Feature | ImageHash | DeepFace |
+|---------|-----------|----------|
+| Face-aware | No | Yes |
+| Rotation invariant | Partial | Yes |
+| Lighting invariant | Partial | Yes |
+| CPU Speed | Very fast | Fast |
+| Accuracy | Good | Better |
+| Best for | General objects | Faces |
 
 ## Project Structure
 

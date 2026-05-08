@@ -137,6 +137,7 @@ class AnnotationSubmit(BaseModel):
     person_id: int | None = None  # Null = new person
     new_person_name: str | None = None  # If creating new person
     ignore: bool = False  # Mark as ignore instead of annotating
+    engine: str | None = None  # Engine to use for embedding (null = default)
 
 
 # ==================== Stats Schemas ====================

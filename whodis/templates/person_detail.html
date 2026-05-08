@@ -18,9 +18,33 @@
         <div class="form-group">
             <input type="file" name="image" accept="image/*" required>
         </div>
+        <div class="form-group">
+            <label style="font-size: 0.9rem;">Embedding Engine:</label>
+            <select name="engine" id="engine-selector" style="font-size: 0.9rem;">
+                <option value="">Default ({{ default_engine }})</option>
+                {% for engine in available_engines %}
+                <option value="{{ engine }}">{{ engine }}</option>
+                {% endfor %}
+            </select>
+        </div>
         <button type="submit" class="btn btn-success">Add Image</button>
     </form>
 </div>
+
+<script>
+(function() {
+    const engineSelect = document.getElementById('engine-selector');
+    if (engineSelect) {
+        const savedEngine = sessionStorage.getItem('annotationEngine');
+        if (savedEngine !== null) {
+            engineSelect.value = savedEngine;
+        }
+        engineSelect.addEventListener('change', (e) => {
+            sessionStorage.setItem('annotationEngine', e.target.value);
+        });
+    }
+})();
+</script>
 
 <div class="card">
     <h3>Reference Images ({{ reference_images|length }})</h3>
@@ -31,6 +55,9 @@
             <img src="{{ img.image_url }}" alt="Reference image" loading="lazy">
             <p style="font-size: 0.8rem; color: #666; margin: 0.5rem 0 0 0;">
                 {{ img.created_at.strftime("%Y-%m-%d") }}
+                {% if img.engine_type %}
+                <span class="badge" style="background: #eee; padding: 2px 5px; border-radius: 3px; margin-left: 5px;">{{ img.engine_type }}</span>
+                {% endif %}
             </p>
         </div>
         {% endfor %}

@@ -134,6 +134,47 @@ class TestWebEndpoints:
         assert response.status_code == 200
         assert "Annotation" in response.text
 
+    def test_submit_annotation_new_person(self, auth_client, db_session, sample_image):
+        """Test submitting annotation form creates new person."""
+        from whodis.models import AnnotationQueue, DetectionLog
+
+        # Create a pending annotation first
+        log = DetectionLog(
+            image_path="test.jpg", confidence=0.0, engine_used="imagehash"
+        )
+        db_session.add(log)
+        db_session.commit()
+
+        queue_item = AnnotationQueue(
+            detection_log_id=log.id, image_path="test.jpg", status="pending"
+        )
+        db_session.add(queue_item)
+        db_session.commit()
+
+        # Write a real test image file so PIL can open it
+        from whodis.config import UPLOAD_DIR
+
+        with open(UPLOAD_DIR / "test.jpg", "wb") as f:
+            f.write(sample_image)
+
+        response = auth_client.post(
+            f"/annotate/{queue_item.id}",
+            data={
+                "new_person_name": "Test Person From Annotation",
+                "person_id": "",
+                "ignore": "false",
+                "engine": "",
+            },
+            follow_redirects=False,
+        )
+
+        assert response.status_code == 302
+
+        # Verify it was annotated
+        db_session.refresh(queue_item)
+        assert queue_item.status == "annotated"
+        assert queue_item.suggested_person.name == "Test Person From Annotation"
+
 
 class TestDetectionAPI:
     """Test detection API endpoints."""

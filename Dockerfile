@@ -15,7 +15,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 COPY pyproject.toml uv.lock README.md ./
 
 # Install dependencies (but not the project itself yet)
-RUN uv sync --frozen --no-install-project --group dev
+RUN uv sync --frozen --no-install-project --group dev --all-extras
 
 # Copy application code
 COPY whodis/ ./whodis/
@@ -25,7 +25,7 @@ COPY run.py ./
 COPY Makefile ./
 
 # Install the project
-RUN uv sync --frozen --group dev
+RUN uv sync --frozen --group dev --all-extras
 
 # Create data directory and volume
 RUN mkdir -p data

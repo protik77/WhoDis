@@ -121,9 +121,7 @@ class ReferenceImage(Base):
 
         if not self.image_path:
             return Path("")
-        if Path(self.image_path).is_absolute():
-            return Path(self.image_path)
-        return UPLOAD_DIR / self.image_path
+        return UPLOAD_DIR / Path(self.image_path).name
 
 
 class DetectionLog(Base):
@@ -193,9 +191,7 @@ class AnnotationQueue(Base):
 
         if not self.image_path:
             return Path("")
-        if Path(self.image_path).is_absolute():
-            return Path(self.image_path)
-        return UPLOAD_DIR / self.image_path
+        return UPLOAD_DIR / Path(self.image_path).name
 
     annotated_at = Column(DateTime, nullable=True)
     annotated_by = Column(Integer, ForeignKey("users.id"), nullable=True)

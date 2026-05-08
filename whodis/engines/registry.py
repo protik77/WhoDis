@@ -55,6 +55,15 @@ def register_default_engines() -> None:
 
     EngineRegistry.register("imagehash", ImageHashEngine)
 
+    # Register DeepFace engine if dependencies are available
+    try:
+        from whodis.engines.deepface_engine import DeepFaceEngine
+
+        EngineRegistry.register("deepface", DeepFaceEngine)
+    except ImportError:
+        # DeepFace dependencies not installed, skip registration
+        pass
+
 
 # Auto-register on import
 register_default_engines()

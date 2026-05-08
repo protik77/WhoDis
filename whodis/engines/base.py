@@ -74,7 +74,11 @@ class DetectionEngine(ABC):
         pass
 
     async def find_matches(
-        self, image_data: bytes, db_session: Session, threshold: float = 0.8
+        self,
+        image_data: bytes,
+        db_session: Session,
+        threshold: float = 0.8,
+        embedding: bytes | None = None,
     ) -> list[ReferenceMatch]:
         """
         Find all potential matches above threshold.
@@ -83,11 +87,16 @@ class DetectionEngine(ABC):
             image_data: Raw image bytes
             db_session: Database session
             threshold: Minimum similarity score (0.0 to 1.0)
+            embedding: Optional precomputed embedding (to avoid recomputation)
 
         Returns:
             List of ReferenceMatch objects, sorted by similarity
         """
-        query_embedding = await self.compute_embedding(image_data)
+        query_embedding = (
+            embedding
+            if embedding is not None
+            else await self.compute_embedding(image_data)
+        )
 
         # Get all reference images with embeddings for this engine
         from whodis.models import Person, ReferenceImage

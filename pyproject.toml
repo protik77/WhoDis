@@ -22,6 +22,13 @@ dependencies = [
 [project.scripts]
 whodis = "whodis.main:main"
 
+[project.optional-dependencies]
+face-recognition = [
+    "deepface>=0.0.99",
+    "opencv-python-headless>=4.13.0.92",
+    "tf-keras>=2.21.0",
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["whodis"]
 
@@ -58,6 +65,11 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 check_untyped_defs = true
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM"]
