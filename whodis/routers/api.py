@@ -20,13 +20,13 @@ security = HTTPBearer(auto_error=False)
 router = APIRouter(prefix="/api", tags=["api"])
 
 
-@router.post("/detect", response_model=DetectionResponse)
+@router.post("/detect", response_model=DetectionResponse | list[DetectionResponse])
 async def detect(
     image: UploadFile = File(...),
     engine: str | None = Form(None),
     db: Session = Depends(get_db),
     user: User = Depends(require_api_key),
-) -> DetectionResponse:
+) -> DetectionResponse | list[DetectionResponse]:
     """
     Detect a person in an image.
 

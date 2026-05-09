@@ -181,58 +181,65 @@ class DeepFaceEngine(DetectionEngine):
                     box=None,
                 )
 
-            # Get the first (largest) face
-            face_data = embedding_objs[0]
-            _query_embedding = pickle.dumps(
-                np.array(face_data["embedding"], dtype=np.float32)
-            )
-            # Note: _query_embedding computed but find_matches will recompute it
+            results = []
+            for face_data in embedding_objs:
+                _query_embedding = pickle.dumps(
+                    np.array(face_data["embedding"], dtype=np.float32)
+                )
 
-            # Get face location box if available
-            box = None
-            if "facial_area" in face_data:
-                area = face_data["facial_area"]
-                # Convert to percentage format [x, y, w, h]
-                img_h, img_w = img_array.shape[:2]
-                box = [
-                    (area["x"] / img_w) * 100,
-                    (area["y"] / img_h) * 100,
-                    (area["w"] / img_w) * 100,
-                    (area["h"] / img_h) * 100,
-                ]
+                box = None
+                if "facial_area" in face_data:
+                    area = face_data["facial_area"]
+                    img_h, img_w = img_array.shape[:2]
+                    box = [
+                        (area["x"] / img_w) * 100,
+                        (area["y"] / img_h) * 100,
+                        (area["w"] / img_w) * 100,
+                        (area["h"] / img_h) * 100,
+                    ]
 
-            # Find matches using the base class method (pass precomputed embedding)
-            matches = await self.find_matches(
-                image_data, db_session, threshold=threshold, embedding=_query_embedding
-            )
+                matches = await self.find_matches(
+                    image_data,
+                    db_session,
+                    threshold=threshold,
+                    embedding=_query_embedding,
+                )
 
-            if not matches:
-                return DetectionResult(
+                if not matches:
+                    results.append(
+                        DetectionResult(
+                            person_id=None,
+                            person_name=None,
+                            confidence=0.0,
+                            matched=False,
+                            box=box,
+                        )
+                    )
+                else:
+                    best_match = matches[0]
+                    results.append(
+                        DetectionResult(
+                            person_id=best_match.person_id,
+                            person_name=best_match.person_name,
+                            confidence=best_match.similarity,
+                            matched=True,
+                            box=box,
+                        )
+                    )
+
+            return results
+
+        except Exception:
+            # No face detected or other error
+            return [
+                DetectionResult(
                     person_id=None,
                     person_name=None,
                     confidence=0.0,
                     matched=False,
-                    box=box,
+                    box=None,
                 )
-
-            best_match = matches[0]
-            return DetectionResult(
-                person_id=best_match.person_id,
-                person_name=best_match.person_name,
-                confidence=best_match.similarity,
-                matched=True,
-                box=box,
-            )
-
-        except Exception:
-            # No face detected or other error
-            return DetectionResult(
-                person_id=None,
-                person_name=None,
-                confidence=0.0,
-                matched=False,
-                box=None,
-            )
+            ]
 
     async def detect_faces(self, image_data: bytes) -> list[dict]:
         """

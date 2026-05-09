@@ -62,56 +62,69 @@ async def detect_person(
     # Perform detection
     result = await engine.detect(image_data, db)
 
-    # Log the detection
-    detection_log = DetectionLog(
-        image_path="inline",  # Will update if we save
-        detected_person_id=result.person_id,
-        confidence=result.confidence,
-        engine_used=engine.name,
-        api_key_id=api_key_id,
-    )
-    db.add(detection_log)
-    db.flush()  # Get ID
+    results_list = result if isinstance(result, list) else [result]
+    responses = []
 
-    if result.matched:
-        # Found a match
-        db.commit()
-        return DetectionResponse(
-            person=result.person_name,
-            person_id=result.person_id,
-            confidence=result.confidence,
-            queued_for_annotation=False,
+    image_saved = False
+    filename = ""
+
+    for res in results_list:
+        # Log the detection
+        detection_log = DetectionLog(
+            image_path="inline",  # Will update if we save
+            detected_person_id=res.person_id,
+            confidence=res.confidence,
             engine_used=engine.name,
+            api_key_id=api_key_id,
         )
-    else:
-        # No match - add to annotation queue
-        # Save the image for annotation
-        filename = f"unknown_{detection_log.id}_{uuid.uuid4().hex[:8]}.jpg"
-        file_path = UPLOAD_DIR / filename
+        db.add(detection_log)
+        db.flush()  # Get ID
 
-        async with aiofiles.open(file_path, "wb") as f:
-            await f.write(image_data)
+        if res.matched:
+            # Found a match
+            responses.append(
+                DetectionResponse(
+                    person=res.person_name,
+                    person_id=res.person_id,
+                    confidence=res.confidence,
+                    queued_for_annotation=False,
+                    engine_used=engine.name,
+                )
+            )
+        else:
+            # No match - add to annotation queue
+            if not image_saved:
+                filename = f"unknown_{detection_log.id}_{uuid.uuid4().hex[:8]}.jpg"
+                file_path = UPLOAD_DIR / filename
+                async with aiofiles.open(file_path, "wb") as f:
+                    await f.write(image_data)
+                image_saved = True
 
-        detection_log.image_path = filename  # type: ignore[assignment]
+            detection_log.image_path = filename  # type: ignore[assignment]
 
-        import json
+            import json
 
-        queue_item = AnnotationQueue(
-            detection_log_id=detection_log.id,
-            image_path=filename,
-            status="pending",
-            box_2d=json.dumps(result.box if result.box else [5, 5, 90, 90]),
-        )
-        db.add(queue_item)
-        db.commit()
+            queue_item = AnnotationQueue(
+                detection_log_id=detection_log.id,
+                image_path=filename,
+                status="pending",
+                box_2d=json.dumps(res.box if res.box else [5, 5, 90, 90]),
+            )
+            db.add(queue_item)
 
-        return DetectionResponse(
-            person=None,
-            person_id=None,
-            confidence=0.0,
-            queued_for_annotation=True,
-            engine_used=engine.name,
-        )
+            responses.append(
+                DetectionResponse(
+                    person=None,
+                    person_id=None,
+                    confidence=0.0,
+                    queued_for_annotation=True,
+                    engine_used=engine.name,
+                )
+            )
+
+    db.commit()
+
+    return responses if isinstance(result, list) else responses[0]
 
 
 async def add_reference_image(

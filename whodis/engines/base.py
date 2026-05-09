@@ -33,16 +33,18 @@ class DetectionEngine(ABC):
     name: str = "base"
 
     @abstractmethod
-    async def detect(self, image_data: bytes, db_session: Session) -> DetectionResult:
+    async def detect(
+        self, image_data: bytes, db_session: Session
+    ) -> DetectionResult | list[DetectionResult]:
         """
-        Detect a person in an image.
+        Detect one or more people in an image.
 
         Args:
             image_data: Raw image bytes
             db_session: Database session for querying reference images
 
         Returns:
-            DetectionResult with person info or None if no match
+            DetectionResult or list of DetectionResult with person info
         """
         pass
 
