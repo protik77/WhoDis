@@ -1,0 +1,79 @@
+[project]
+name = "whodis"
+version = "0.1.0"
+description = "Person detection API with web annotation interface"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.104",
+    "uvicorn[standard]>=0.24",
+    "sqlalchemy>=2.0",
+    "alembic>=1.12",
+    "python-multipart>=0.0.6",
+    "python-jose[cryptography]>=3.3",
+    "bcrypt>=4.1",
+    "imagehash>=4.3",
+    "pillow>=10.0",
+    "jinja2>=3.1",
+    "python-dotenv>=1.0",
+    "aiofiles>=23.2",
+]
+
+[project.scripts]
+whodis = "whodis.main:main"
+
+[project.optional-dependencies]
+face-recognition = [
+    "deepface>=0.0.99",
+    "opencv-python-headless>=4.13.0.92",
+    "tf-keras>=2.21.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["whodis"]
+
+[tool.uv]
+package = true
+
+[tool.setuptools]
+packages = ["whodis"]
+
+[tool.setuptools.package-data]
+whodis = ["templates/*", "static/**/*"]
+
+[dependency-groups]
+dev = [
+    "pytest>=7.4",
+    "pytest-asyncio>=0.21",
+    "httpx>=0.25",
+    "mypy>=1.7",
+    "ruff>=0.1",
+    "coverage>=7.3",
+    "pytest-cov>=4.1",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM"]
+ignore = ["E501", "B008"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"

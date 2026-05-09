@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Annotate - WhoDis{% endblock %}
+
+{% block content %}
+<h1>Annotation Queue</h1>
+
+<div class="stats-grid" style="margin-bottom: 1rem;">
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.pending }}</div>
+        <div class="stat-label">Pending</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.annotated }}</div>
+        <div class="stat-label">Annotated</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">{{ stats.ignored }}</div>
+        <div class="stat-label">Ignored</div>
+    </div>
+</div>
+
+{% if pending %}
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <h3>Pending Annotations ({{ pending|length }})</h3>
+        <div class="engine-selector">
+            <label for="annotation-engine" style="font-size: 0.9rem; margin-right: 0.5rem;">Annotation Engine:</label>
+            <select id="annotation-engine" name="engine" form="annotation-form-template" style="font-size: 0.9rem;">
+                <option value="">Default ({{ default_engine }})</option>
+                {% for engine in available_engines %}
+                <option value="{{ engine }}">{{ engine }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 1rem;">
+        {% for item in pending %}
+        <div style="border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+            <div style="position: relative; width: 100%;">
+                <img src="{{ item.image_url }}" alt="Unknown person" style="width: 100%; height: auto; display: block;">
+                {% if item.box %}
+                <div style="
+                    position: absolute;
+                    border: 3px solid #e74c3c;
+                    box-shadow: 0 0 8px rgba(0,0,0,0.5);
+                    left: {{ item.box[0] }}%;
+                    top: {{ item.box[1] }}%;
+                    width: {{ item.box[2] }}%;
+                    height: {{ item.box[3] }}%;
+                    pointer-events: none;
+                    border-radius: 2px;
+                ">
+                    <span style="position: absolute; top: -20px; left: -2px; background: #e74c3c; color: white; padding: 0 4px; font-size: 0.7rem; font-weight: bold; border-radius: 2px;">ANNOTATE THIS</span>
+                </div>
+                {% endif %}
+            </div>
+            <div style="padding: 1rem;">
+                <p style="font-size: 0.8rem; color: #666; margin: 0 0 0.5rem 0;">
+                    {{ item.created_at.strftime("%Y-%m-%d %H:%M") }}
+                </p>
+                <form method="POST" action="/annotate/{{ item.id }}" class="annotation-form">
+                    <input type="hidden" name="engine" class="engine-input" value="">
+                    <div class="form-group">
+                        <select name="person_id" style="font-size: 0.9rem;">
+                            <option value="">-- Select Person --</option>
+                            {% for p in people %}
+                            <option value="{{ p.id }}">{{ p.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <input type="text" name="new_person_name" placeholder="Or new person name" style="font-size: 0.9rem;">
+                    </div>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button type="submit" class="btn btn-success" style="flex: 1; padding: 0.4rem;">Save</button>
+                        <button type="submit" name="ignore" value="true" class="btn btn-secondary" style="padding: 0.4rem;" onclick="return confirm('Ignore this image?');">Ignore</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <p style="text-align: center; color: #666;">No pending annotations. The queue is empty!</p>
+</div>
+{% endif %}
+
+<script>
+// Persist engine selection across page loads
+(function() {
+    const engineSelect = document.getElementById('annotation-engine');
+    const engineInputs = document.querySelectorAll('.engine-input');
+
+    if (engineSelect) {
+        // Load saved preference
+        const savedEngine = sessionStorage.getItem('annotationEngine');
+        if (savedEngine !== null) {
+            engineSelect.value = savedEngine;
+        }
+
+        // Update all hidden inputs when selection changes
+        function updateEngineInputs() {
+            const value = engineSelect.value;
+            engineInputs.forEach(input => {
+                input.value = value;
+            });
+            sessionStorage.setItem('annotationEngine', value);
+        }
+
+        engineSelect.addEventListener('change', updateEngineInputs);
+
+        // Initial update
+        updateEngineInputs();
+    }
+})();
+</script>
+{% endblock %}
